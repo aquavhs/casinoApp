@@ -32,13 +32,14 @@ async function init() {
   const STEP_MS = 220;       // период добавления новой точки (мс)
   const COVER_AT_SEC = 15;   // секунда включения шторки
   const PADDING_X = 8;       // внутренний отступ слева в области графика
+  const DRAW_SMOOTH = 3;     // усреднение последних точек перед отрисовкой
 
   // Процесс Орнштейна–Уленбека — гладкий «рынок»
   const OU = {
     mu: 100,       // средний уровень
     theta: 0.06,   // возврат к среднему (0..1)
-    sigma: 0.18,   // волатильность
-    maxStep: 0.35, // ограничение скачка за тик (анти-иглы)
+    sigma: 0.1,    // волатильность
+    maxStep: 0.15, // ограничение скачка за тик (анти-иглы)
   };
 
   // Масштаб Y (фиксируем на раунд и плавно ведём к целевому)
@@ -81,6 +82,15 @@ async function init() {
   // доступ к кольцевому буферу
   const at = (i) => buf[(head + i) % N];            // i: 0..N-1 (0 — слева)
   const setLast = (v) => { buf[(head + N - 1) % N] = v; };
+
+  // усреднение нескольких последних точек для сглаживания линии
+  function smoothAt(i) {
+    let sum = 0;
+    for (let k = 0; k < DRAW_SMOOTH; k++) {
+      sum += at((i - k + N) % N);
+    }
+    return sum / DRAW_SMOOTH;
+  }
 
   function stepForward() {
     if (paused) return;
@@ -150,8 +160,8 @@ async function init() {
 
     // рисуем N-1 сегмент (не замыкаем в кольцо — без стыковых скачков)
     for (let i = 0; i < N - 1; i++) {
-      const cur = at(i);
-      const nxt = at(i + 1);
+      const cur = smoothAt(i);
+      const nxt = smoothAt(i + 1);
       const yVal = lerp(cur, nxt, t);
 
       const x = vpX + PADDING_X + i * segW - xShift;
