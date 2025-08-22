@@ -32,7 +32,6 @@ async function init() {
   // -------- параметры графика ----------
   const N = 300;             // количество видимых точек (чем больше — тем плавнее)
   const STEP_MS = 220;       // период добавления новой точки (мс)
-  const COVER_AT_SEC = 15;   // секунда включения шторки
   const PADDING_X = 8;       // внутренний отступ слева в области графика
   const DRAW_SMOOTH = 5;     // усреднение последних точек перед отрисовкой
 
@@ -51,7 +50,6 @@ async function init() {
 
   // -------- состояние ----------
   let lastOutcome = null;
-  let showCover = false;
   let paused = false;
   let bias = 0;                    // лёгкий дрейф после settle/close
 
@@ -148,9 +146,9 @@ async function init() {
     drawGrid(w, h);
     smoothScale();
 
-    // левая половина — область графика, правая — шторка
+    // область графика занимает весь холст
     const vpX = 0;
-    const vpW = Math.floor(w / 2);
+    const vpW = w;
 
     // ширина сегмента и плавный сдвиг влево
     const segW = (vpW - 2 * PADDING_X) / (N - 1);
@@ -180,22 +178,6 @@ async function init() {
       ctx.fillText(lastOutcome === 'up' ? '📈 UP' : '📉 DOWN', 8, 22);
     }
 
-    // правая половина — чёрная шторка с «?»
-    if (showCover) {
-      const halfX = Math.floor(w / 2);
-      ctx.save();
-      ctx.fillStyle = '#000';
-      ctx.fillRect(halfX, 0, w - halfX, h);
-      ctx.fillStyle = '#e5e7eb';
-      ctx.font = 'bold 72px system-ui';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.shadowColor = 'rgba(0,0,0,0.6)';
-      ctx.shadowBlur = 8;
-      ctx.fillText('?', halfX + (w - halfX) / 2, h / 2);
-      ctx.shadowBlur = 0;
-      ctx.restore();
-    }
   }
 
   // ===== API (пока заглушки) =====
@@ -223,16 +205,11 @@ async function init() {
   async function poll() {
     try {
       const st = await fetchState();
-      const elapsed = st.duration - st.timeleft;
-
-      showCover = (st.status !== 'settled') && (elapsed >= COVER_AT_SEC);
-      paused = showCover && st.status === 'betting';
 
       if (lastRoundId !== st.id) {
         // новый раунд: сбрасываем состояние и фиксируем масштаб
         lastRoundId = st.id;
         lastOutcome = null;
-        showCover = false;
         paused = false;
         bias = 0;
 
@@ -254,7 +231,6 @@ async function init() {
       } else if (st.status === 'settled') {
         lastOutcome = st.outcome;
         bias = (st.outcome === 'up') ? +1 : -1; // небольшой тренд после результата
-        showCover = false;
         paused = false;
         statusEl.textContent = `Раунд #${st.id} завершён: ${st.outcome === 'up' ? '📈 вверх' : '📉 вниз'}.`;
       } else {
