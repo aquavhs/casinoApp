@@ -12,10 +12,11 @@ async function init() {
   // -------- DOM ----------
   const cvs = document.getElementById('canvas');
   const ctx = cvs.getContext('2d');
-  const statusEl = document.getElementById('status');
-  const controls = document.getElementById('controls');
-  const btnUp = document.getElementById('btn-up');
-  const btnDown = document.getElementById('btn-down');
+    const statusEl = document.getElementById('status');
+    const choiceEl = document.getElementById('choice');
+    const controls = document.getElementById('controls');
+    const btnUp = document.getElementById('btn-up');
+    const btnDown = document.getElementById('btn-down');
 
   // -------- размеры ----------
   function sizeCanvas() {
@@ -204,18 +205,18 @@ async function init() {
     return res.json();
   }
 
-  btnUp.addEventListener('click', async () => {
-    const r = await fetch('/api/rounds/bet', { method: 'POST' });
-    const j = await r.json();
-    controls.style.display = 'none';
-    statusEl.textContent = j.ok ? 'Вы выбрали: 📈 Вверх' : 'Приём ставок закрыт';
-  });
-  btnDown.addEventListener('click', async () => {
-    const r = await fetch('/api/rounds/bet', { method: 'POST' });
-    const j = await r.json();
-    controls.style.display = 'none';
-    statusEl.textContent = j.ok ? 'Вы выбрали: 📉 Вниз' : 'Приём ставок закрыт';
-  });
+    btnUp.addEventListener('click', async () => {
+      const r = await fetch('/api/rounds/bet', { method: 'POST' });
+      const j = await r.json();
+      controls.style.display = 'none';
+      choiceEl.textContent = j.ok ? 'Вы выбрали: 📈 Вверх' : 'Приём ставок закрыт';
+    });
+    btnDown.addEventListener('click', async () => {
+      const r = await fetch('/api/rounds/bet', { method: 'POST' });
+      const j = await r.json();
+      controls.style.display = 'none';
+      choiceEl.textContent = j.ok ? 'Вы выбрали: 📉 Вниз' : 'Приём ставок закрыт';
+    });
 
   // ===== опрос состояния раунда =====
   let lastRoundId = null;
@@ -235,13 +236,14 @@ async function init() {
         paused = false;
         bias = 0;
 
-        controls.style.display = 'flex';
+          controls.style.display = 'flex';
+          choiceEl.textContent = '';
 
-        [targetMin, targetMax] = recomputeTargetScale();
-        viewMin = targetMin;
-        viewMax = targetMax;
+          [targetMin, targetMax] = recomputeTargetScale();
+          viewMin = targetMin;
+          viewMax = targetMax;
 
-        statusEl.textContent = `Новый раунд #${st.id}`;
+          statusEl.textContent = `Новый раунд #${st.id}`;
       }
 
       if (st.status === 'betting') {
