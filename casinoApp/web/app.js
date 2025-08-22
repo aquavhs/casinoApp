@@ -50,7 +50,7 @@ async function init() {
   let lastOutcome = null;
   let showCover = false;
   let paused = false;
-  let bias = 0;                    // лёгкий дрейф после settle
+  let bias = 0;                    // лёгкий дрейф после settle/close
 
   const buf = genInitialSeries(N); // кольцевой буфер длиной N
   let head = 0;
@@ -211,8 +211,8 @@ async function init() {
       const st = await fetchState();
       const elapsed = st.duration - st.timeleft;
 
-      showCover = (st.status === 'betting') && (elapsed >= COVER_AT_SEC);
-      paused = showCover;
+      showCover = (st.status !== 'settled') && (elapsed >= COVER_AT_SEC);
+      paused = showCover && st.status === 'betting';
 
       if (lastRoundId !== st.id) {
         // новый раунд: сбрасываем состояние и фиксируем масштаб
@@ -220,6 +220,7 @@ async function init() {
         lastOutcome = null;
         showCover = false;
         paused = false;
+        bias = 0;
 
         [targetMin, targetMax] = recomputeTargetScale();
         viewMin = targetMin;
@@ -230,6 +231,9 @@ async function init() {
 
       if (st.status === 'betting') {
         statusEl.textContent = `Раунд #${st.id} — осталось ${st.timeleft}s. Делай ставку!`;
+      } else if (st.status === 'closed') {
+        bias = (st.outcome === 'up') ? +1 : -1; // скрытый дрейф к исходу
+        statusEl.textContent = `Раунд #${st.id} — ставки закрыты, ждём результат...`;
       } else if (st.status === 'settled') {
         lastOutcome = st.outcome;
         bias = (st.outcome === 'up') ? +1 : -1; // небольшой тренд после результата

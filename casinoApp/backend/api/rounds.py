@@ -13,11 +13,13 @@ class RoundState:
     id: int
     started_at: float
     ends_at: float
+    reveal_at: float | None
     status: str           # "betting" | "closed" | "settled"
     outcome: str | None   # "up" | "down" | None
     seed: str             # для честности (потом раскроем)
 
 ROUND_DURATION = 30  # сек
+REVEAL_DELAY = 5      # пауза перед раскрытием результата
 _current: RoundState | None = None
 _counter = 0
 
@@ -31,6 +33,7 @@ def _ensure_round():
             id=_counter,
             started_at=now,
             ends_at=now + ROUND_DURATION,
+            reveal_at=None,
             status="betting",
             outcome=None,
             seed=secrets.token_hex(16),  # ← заготовка под commit-reveal
@@ -41,6 +44,8 @@ def _ensure_round():
             _current.status = "closed"
             # определяем исход честным RNG
             _current.outcome = "up" if secrets.randbelow(2) == 1 else "down"
+            _current.reveal_at = now + REVEAL_DELAY
+        elif _current.status == "closed" and _current.reveal_at and now >= _current.reveal_at:
             # в реальности тут же бы считали выплаты
             _current.status = "settled"
 
