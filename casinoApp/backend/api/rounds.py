@@ -1,11 +1,15 @@
 # ← заменить содержимое файла на это
 import time
 import secrets
+import logging
 from dataclasses import dataclass
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
 
 router = APIRouter(prefix="/api/rounds", tags=["rounds"])
+
 
 # ---- Простая модель состояния в памяти ----
 @dataclass
@@ -17,9 +21,21 @@ class RoundState:
     outcome: str | None   # "up" | "down" | None
     seed: str             # для честности (потом раскроем)
 
+
+@dataclass
+class Bet:
+    user: str
+    direction: str  # "up" | "down"
+
+
+class BetRequest(BaseModel):
+    dir: str
+    user: str = "anon"
+
 ROUND_DURATION = 30  # сек
 _current: RoundState | None = None
 _counter = 0
+bets: dict[int, list[Bet]] = {}
 
 def _ensure_round():
     """Создаёт новый раунд, если его нет или он завершён."""
@@ -41,7 +57,16 @@ def _ensure_round():
             _current.status = "closed"
             # определяем исход честным RNG
             _current.outcome = "up" if secrets.randbelow(2) == 1 else "down"
-            # в реальности тут же бы считали выплаты
+            round_bets = bets.get(_current.id, [])
+            wins = sum(1 for b in round_bets if b.direction == _current.outcome)
+            losses = len(round_bets) - wins
+            logging.info(
+                "Round %s settled: outcome=%s, wins=%s, losses=%s",
+                _current.id,
+                _current.outcome,
+                wins,
+                losses,
+            )
             _current.status = "settled"
 
 @router.get("/state")
@@ -58,8 +83,10 @@ async def get_state():
     })
 
 @router.post("/bet")
-async def place_bet():
-    # MVP-заглушка: приём ставки пока не сохраняем (позже — БД)
+async def place_bet(req: BetRequest):
     _ensure_round()
     ok = (_current.status == "betting")
+    if ok:
+        round_bets = bets.setdefault(_current.id, [])
+        round_bets.append(Bet(user=req.user, direction=req.dir))
     return JSONResponse({"ok": ok, "round_id": _current.id, "status": _current.status})
