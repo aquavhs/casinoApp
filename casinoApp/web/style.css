@@ -28,8 +28,9 @@ html, body {
 
 #controls {
   display: flex;
+  justify-content: center;
   gap: 12px;
-  margin-bottom: 8px;
+  margin: 12px 0 8px;
 }
 
 #controls button {
