@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Куда пойдёт график?</title>
+  <link rel="stylesheet" href="./style.css"> <!-- ← добавили подключение стилей -->
+
+<script src="./app.js" defer></script>  <!-- ← добавили defer (или оставь внизу body) -->
+
+</head>
+<body>
+  <div id="app">
+    <h1>Куда пойдёт график?</h1>
+    <div id="chart">
+        <canvas id="canvas" width="900" height="420"></canvas>
+    </div>
+    <div id="controls">
+      <button id="btn-up">📈 Вверх</button>
+      <button id="btn-down">📉 Вниз</button>
+    </div>
+    <div id="status">Готов к ставке</div>
+  </div>
+  <script src="./app.js"></script> <!-- ← добавили JS -->
+</body>
+</html>
