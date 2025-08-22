@@ -13,6 +13,7 @@ async function init() {
   const cvs = document.getElementById('canvas');
   const ctx = cvs.getContext('2d');
   const statusEl = document.getElementById('status');
+  const controls = document.getElementById('controls');
   const btnUp = document.getElementById('btn-up');
   const btnDown = document.getElementById('btn-down');
 
@@ -196,12 +197,14 @@ async function init() {
   btnUp.addEventListener('click', async () => {
     const r = await fetch('/api/rounds/bet', { method: 'POST' });
     const j = await r.json();
-    statusEl.textContent = j.ok ? 'Ставка: Вверх (демо)' : 'Приём ставок закрыт';
+    controls.style.display = 'none';
+    statusEl.textContent = j.ok ? 'Вы выбрали: 📈 Вверх' : 'Приём ставок закрыт';
   });
   btnDown.addEventListener('click', async () => {
     const r = await fetch('/api/rounds/bet', { method: 'POST' });
     const j = await r.json();
-    statusEl.textContent = j.ok ? 'Ставка: Вниз (демо)' : 'Приём ставок закрыт';
+    controls.style.display = 'none';
+    statusEl.textContent = j.ok ? 'Вы выбрали: 📉 Вниз' : 'Приём ставок закрыт';
   });
 
   // ===== опрос состояния раунда =====
@@ -221,6 +224,8 @@ async function init() {
         showCover = false;
         paused = false;
         bias = 0;
+
+        controls.style.display = 'flex';
 
         [targetMin, targetMax] = recomputeTargetScale();
         viewMin = targetMin;
