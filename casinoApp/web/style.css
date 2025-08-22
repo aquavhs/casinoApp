@@ -45,7 +45,12 @@ html, body {
 #btn-up   { background: #1f9d55; color: #fff; }
 #btn-down { background: #e53e3e; color: #fff; }
 
-#status {
+#status,
+#choice {
   opacity: .9;
   font-size: 14px;
+}
+
+#choice {
+  margin-top: 4px;
 }
